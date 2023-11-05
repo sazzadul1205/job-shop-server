@@ -143,8 +143,12 @@ async function run() {
             // sorting by email
             let queryObj = {};
             const bidderEmail = req.query.bidderEmail;
+            const sellerEmail = req.query.sellerEmail;
             if (bidderEmail) {
                 queryObj.bidderEmail = bidderEmail;
+            }
+            if (sellerEmail) {
+                queryObj.sellerEmail = sellerEmail;
             }
             const cursor = bidsCollection.find(queryObj)
             const result = await cursor.toArray()
