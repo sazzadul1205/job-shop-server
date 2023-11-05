@@ -74,6 +74,7 @@ async function run() {
         // show all the jobs
         // /jobs?category=${category}
         app.get('/api/v1/jobs', async (req, res) => {
+<<<<<<< HEAD
             // sorting by category and email
             let queryObj = {};
             const category = req.query.category;
@@ -93,6 +94,19 @@ async function run() {
             res.send(result);
         });
 
+=======
+            // sorting by category
+            let queryObj = {}
+            const category = req.query.category
+            if (category) {
+                queryObj.category = category;
+            }
+            const cursor = jobsCollection.find(queryObj)
+            const result = await cursor.toArray()
+
+            res.send(result)
+        })
+>>>>>>> 48f17ffaa5bb61c1f42aa41ba3cafd79b94196aa
         // show the individual jobs by id
         app.get('/api/v1/jobs/:id', async (req, res) => {
             const id = req.params.id;
@@ -100,6 +114,14 @@ async function run() {
             const result = await jobsCollection.findOne(query);
             res.send(result);
         });
+        app.post('/api/v1/jobs/add-new-job', async (req, res) => {
+            const job = req.body;
+            // console.log(job);
+            const result = await jobsCollection.insertOne(job)
+            res.send(result)
+        })
+
+
 
         // add new jobs
         app.post('/api/v1/jobs/add-new-job', async (req, res) => {
