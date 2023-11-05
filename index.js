@@ -100,6 +100,7 @@ async function run() {
             const result = await jobsCollection.findOne(query);
             res.send(result);
         });
+
         // add new jobs
         app.post('/api/v1/jobs/add-new-job', async (req, res) => {
             const job = req.body;
@@ -107,6 +108,27 @@ async function run() {
             const result = await jobsCollection.insertOne(job)
             res.send(result)
         })
+
+        // Updated Existing Jobs
+        app.put('/api/v1/jobs/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            const updatedJob = req.body;
+            const job = {
+                $set: {
+                    email: updatedJob.email,
+                    title: updatedJob.title,
+                    deadline: updatedJob.deadline,
+                    category: updatedJob.category,
+                    minPrice: updatedJob.minPrice,
+                    maxPrice: updatedJob.maxPrice,
+                    description: updatedJob.description,
+                }
+            };
+            const result = await jobsCollection.updateOne(filter, job, options);
+            res.send(result);
+        });
 
 
 
