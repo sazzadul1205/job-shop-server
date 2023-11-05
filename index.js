@@ -142,9 +142,9 @@ async function run() {
         app.get('/api/v1/bids', async (req, res) => {
             // sorting by email
             let queryObj = {};
-            const email = req.query.email;
-            if (email) {
-                queryObj.email = email;
+            const bidderEmail = req.query.bidderEmail;
+            if (bidderEmail) {
+                queryObj.bidderEmail = bidderEmail;
             }
             const cursor = bidsCollection.find(queryObj)
             const result = await cursor.toArray()
@@ -165,6 +165,29 @@ async function run() {
             const result = await bidsCollection.insertOne(bid)
             res.send(result)
         })
+        // Updated Existing bid
+        app.put('/api/v1/bids/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            const updatedBid = req.body;
+            const bid = {
+                $set: {
+                    Bid: updatedBid.Bid,
+                    bidderDeadline: updatedBid.bidderDeadline,
+                    bidderEmail: updatedBid.bidderEmail,
+                    maxPrice: updatedBid.maxPrice,
+                    minPrice: updatedBid.minPrice,
+                    sellerEmail: updatedBid.sellerEmail,
+                    title: updatedBid.title,
+                    status: updatedBid.status,
+                }
+            };
+            console.log(bid)
+            const result = await bidsCollection.updateOne(filter, bid, options);
+            res.send(result);
+            console.log(result);
+        });
 
 
         // Send a ping to confirm a successful connection
