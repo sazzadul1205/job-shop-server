@@ -109,7 +109,7 @@ async function run() {
             res.send(result)
         })
 
-        // Updated Existing Jobs
+        // Updated Existing Job
         app.put('/api/v1/jobs/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
@@ -130,6 +130,13 @@ async function run() {
             res.send(result);
         });
 
+        // delete a Existing 
+        app.delete('/api/v1/jobs/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await jobsCollection.deleteOne(query);
+            res.send(result);
+        })
 
 
         // bid section
@@ -147,6 +154,7 @@ async function run() {
             const result = await bidsCollection.findOne(query);
             res.send(result);
         });
+        // add a new bid
         app.post('/api/v1/bids/add-new-bid', async (req, res) => {
             const bid = req.body;
             // console.log(bid);
