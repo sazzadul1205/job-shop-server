@@ -46,15 +46,13 @@ async function run() {
             if (!token) {
                 return res.status(401).send({ message: 'You are not authorized' })
             }
-            jwt.verify(token, secret, function (err, decoded) {
+            jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
                 if (err) {
                     return res.status(401).send({ message: 'You are not authorized' })
                 }
                 req.user = decoded
                 next()
             });
-
-
         }
 
         // token genaration
@@ -73,20 +71,34 @@ async function run() {
 
         // show all the jobs
         // /jobs?category=${category}
-        app.get('/api/v1/jobs', async (req, res) => {
-            // sorting by category and email
+        app.get('/api/v1/bids', gateman, async (req, res) => {
+            // sorting by email
             let queryObj = {};
-            const category = req.query.category;
-            const email = req.query.email;
-
-            if (category) {
-                queryObj.category = category;
+            const bidderEmail = req.query.bidderEmail;
+            const sellerEmail = req.query.sellerEmail;
+            if (bidderEmail) {
+                queryObj.bidderEmail = bidderEmail;
             }
-            if (email) {
-                queryObj.email = email;
+            if (sellerEmail) {
+                queryObj.sellerEmail = sellerEmail;
             }
-            const cursor = jobsCollection.find(queryObj);
+            const cursor = bidsCollection.find(queryObj);
             const result = await cursor.toArray();
+
+            const statusOrder = {
+                Compleat: 1,
+                'In Progress': 2,
+                Pending: 3,
+                Rejected: 4
+            };
+            result.sort((a, b) => {
+                const statusA = statusOrder[a.status] || 5;
+                const statusB = statusOrder[b.status] || 5;
+                if (statusA === statusB) {
+                    return 0;
+                }
+                return statusA - statusB;
+            });
 
             res.send(result);
         });
@@ -139,12 +151,16 @@ async function run() {
 
         // bid section
         // show all the bids
-        app.get('/api/v1/bids', async (req, res) => {
+        app.get('/api/v1/bids', gateman, async (req, res) => {
             // sorting by email
             let queryObj = {};
             const bidderEmail = req.query.bidderEmail;
+            const sellerEmail = req.query.sellerEmail;
             if (bidderEmail) {
                 queryObj.bidderEmail = bidderEmail;
+            }
+            if (sellerEmail) {
+                queryObj.sellerEmail = sellerEmail;
             }
             const cursor = bidsCollection.find(queryObj)
             const result = await cursor.toArray()
@@ -152,7 +168,7 @@ async function run() {
             res.send(result)
         })
         // show the individual bids by id
-        app.get('/api/v1/bids/:id', async (req, res) => {
+        app.get('/api/v1/bids/:id', gateman, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await bidsCollection.findOne(query);
@@ -166,7 +182,7 @@ async function run() {
             res.send(result)
         })
         // Updated Existing bid
-        app.put('/api/v1/bids/:id', async (req, res) => {
+        app.put('/api/v1/bids/:id', gateman, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const options = { upsert: true };
