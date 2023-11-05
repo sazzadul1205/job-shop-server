@@ -82,11 +82,9 @@ async function run() {
             if (category) {
                 queryObj.category = category;
             }
-
             if (email) {
                 queryObj.email = email;
             }
-
             const cursor = jobsCollection.find(queryObj);
             const result = await cursor.toArray();
 
@@ -124,6 +122,7 @@ async function run() {
                     minPrice: updatedJob.minPrice,
                     maxPrice: updatedJob.maxPrice,
                     description: updatedJob.description,
+                    status: updatedJob.status,
                 }
             };
             const result = await jobsCollection.updateOne(filter, job, options);
@@ -138,11 +137,16 @@ async function run() {
             res.send(result);
         })
 
-
         // bid section
         // show all the bids
         app.get('/api/v1/bids', async (req, res) => {
-            const cursor = bidsCollection.find()
+            // sorting by email
+            let queryObj = {};
+            const email = req.query.email;
+            if (email) {
+                queryObj.email = email;
+            }
+            const cursor = bidsCollection.find(queryObj)
             const result = await cursor.toArray()
 
             res.send(result)
