@@ -71,34 +71,24 @@ async function run() {
 
         // show all the jobs
         // /jobs?category=${category}
-        app.get('/api/v1/bids', gateman, async (req, res) => {
-            // sorting by email
+        app.get('/api/v1/jobs', async (req, res) => {
+            // sorting by category and email
             let queryObj = {};
-            const bidderEmail = req.query.bidderEmail;
-            const sellerEmail = req.query.sellerEmail;
-            if (bidderEmail) {
-                queryObj.bidderEmail = bidderEmail;
-            }
-            if (sellerEmail) {
-                queryObj.sellerEmail = sellerEmail;
-            }
-            const cursor = bidsCollection.find(queryObj);
-            const result = await cursor.toArray();
+            const category = req.query.category;
+            const email = req.query.email;
+            const title = req.query.title;
 
-            const statusOrder = {
-                Compleat: 1,
-                'In Progress': 2,
-                Pending: 3,
-                Rejected: 4
-            };
-            result.sort((a, b) => {
-                const statusA = statusOrder[a.status] || 5;
-                const statusB = statusOrder[b.status] || 5;
-                if (statusA === statusB) {
-                    return 0;
-                }
-                return statusA - statusB;
-            });
+            if (title) {
+                queryObj.title = title;
+            }
+            if (category) {
+                queryObj.category = category;
+            }
+            if (email) {
+                queryObj.email = email;
+            }
+            const cursor = jobsCollection.find(queryObj);
+            const result = await cursor.toArray();
 
             res.send(result);
         });
@@ -162,11 +152,26 @@ async function run() {
             if (sellerEmail) {
                 queryObj.sellerEmail = sellerEmail;
             }
-            const cursor = bidsCollection.find(queryObj)
-            const result = await cursor.toArray()
+            const cursor = bidsCollection.find(queryObj);
+            const result = await cursor.toArray();
 
-            res.send(result)
-        })
+            const statusOrder = {
+                Compleat: 1,
+                'In Progress': 2,
+                Pending: 3,
+                Rejected: 4
+            };
+            result.sort((a, b) => {
+                const statusA = statusOrder[a.status] || 5;
+                const statusB = statusOrder[b.status] || 5;
+                if (statusA === statusB) {
+                    return 0;
+                }
+                return statusA - statusB;
+            });
+
+            res.send(result);
+        });
         // show the individual bids by id
         app.get('/api/v1/bids/:id', gateman, async (req, res) => {
             const id = req.params.id;
