@@ -7,15 +7,17 @@ const app = express();
 const port = process.env.PORT || 5000;
 require('dotenv').config();
 
-
-
 //parsers
-app.use(express.json())
-app.use(cookieParser())
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: [
+        'http://localhost:5173',
+        'https://job-shop-a7d92.web.app',
+        'https://job-shop-a7d92.firebaseapp.com'
+    ],
     credentials: true
 }))
+app.use(express.json())
+app.use(cookieParser())
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@job-shop.scmo9ih.mongodb.net/?retryWrites=true&w=majority`;
@@ -32,7 +34,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        // await client.connect();
 
         // collections 
         const jobsCollection = client.db('job-shop').collection('jobs')
