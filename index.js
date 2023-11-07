@@ -31,6 +31,22 @@ const client = new MongoClient(uri, {
     }
 });
 
+
+// middleware to see if the token is valid
+const gateman = (req, res, next) => {
+    const { token } = req.cookies
+    if (!token) {
+        return res.status(401).send({ message: 'You are not authorized' })
+    }
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if (err) {
+            return res.status(401).send({ message: 'You are not authorized' })
+        }
+        req.user = decoded
+        next()
+    });
+}
+
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -39,23 +55,6 @@ async function run() {
         // collections 
         const jobsCollection = client.db('job-shop').collection('jobs')
         const bidsCollection = client.db('job-shop').collection('bids')
-
-
-
-        // middleware to see if the token is valid
-        const gateman = (req, res, next) => {
-            const { token } = req.cookies
-            if (!token) {
-                return res.status(401).send({ message: 'You are not authorized' })
-            }
-            jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
-                if (err) {
-                    return res.status(401).send({ message: 'You are not authorized' })
-                }
-                req.user = decoded
-                next()
-            });
-        }
 
         // token genaration
         app.post('/api/v1/auth/access-token', (req, res) => {
@@ -69,19 +68,29 @@ async function run() {
             }).send({ success: true })
         })
 
+        app.post('/api/v1/auth/logout', async (req, res) => {
+            const user = req.body
+            console.log('logging out', user);
+            res.clearCookie('token', { maxAge: 0 }).send({ success: true })
+        });
+
         // jobs section
 
         // show all the jobs
         // /jobs?category=${category}
         app.get('/api/v1/jobs', async (req, res) => {
+
             // sorting by category and email
             let queryObj = {};
             const category = req.query.category;
             const email = req.query.email;
             const title = req.query.title;
+            const page = Number(req.query.page);
+            const limit = Number(req.query.limit);
+            const skip = (page - 1) * limit
 
             if (title) {
-                queryObj.title = title;
+                queryObj.title = { $regex: title, $options: 'i' };
             }
             if (category) {
                 queryObj.category = category;
@@ -89,11 +98,14 @@ async function run() {
             if (email) {
                 queryObj.email = email;
             }
-            const cursor = jobsCollection.find(queryObj);
+
+            const cursor = jobsCollection.find(queryObj).skip(skip).limit(limit);
             const result = await cursor.toArray();
 
             res.send(result);
+
         });
+
 
         // show the individual jobs by id
         app.get('/api/v1/jobs/:id', async (req, res) => {
